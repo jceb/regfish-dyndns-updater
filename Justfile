@@ -28,8 +28,6 @@ load:
 
 # Push image into registry
 push:
-    # @TAG="$(just tag)"; \
-    # @TAG="$(just _load | skopeo inspect docker-archive:/dev/stdin | yq e '.Digest' | sed -n -e "s/sha256:.*\(.\{8\}\)/\1/p")";
     just _load | skopeo copy docker-archive:/dev/stdin "docker://$(just repository)"; \
     just _load | skopeo copy docker-archive:/dev/stdin "docker://{{ REGISTRY }}:latest";
 
@@ -42,17 +40,26 @@ docker-shell: load
     @TAG="$(just nixtag)"; \
     docker run -it --rm "$(just repository)" sh
 
-# Compute tag
+# Compute image tag
 tag:
     @SHA="$(git rev-parse --short HEAD)"; \
      DIRTY="$(test -z "$(git status --porcelain)" || echo "-dirty")"; \
      echo "${SHA}${DIRTY}"
 
-# Compute nix tag
+# Compute nix image tag
 nixtag:
     @just build | xargs awk '/^exec/ {print $3}' | xargs basename | sed -ne 's/-.*//p'
 
-# Compute repository
+# Compute image digest
+digest:
+    @just _load | skopeo inspect docker-archive:/dev/stdin | yq e '.Digest'
+
+# Compute image repository including tag
 repository:
     @TAG="$(just nixtag)"; \
     echo "{{ REGISTRY }}:$TAG"
+
+# Compute image repository including tag
+repository-digest:
+    @TAG="$(just nixtag)"; \
+    echo "{{ REGISTRY }}:$TAG@$(just digest)"

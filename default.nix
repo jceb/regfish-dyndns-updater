@@ -133,6 +133,7 @@ in pkgs.dockerTools.streamLayeredImage {
     mkdir /tmp
     chmod 1777 /tmp
   '';
+  enableFakechroot = true;
   config = {
     # Valid values, see: https://github.com/moby/moby/blob/master/image/spec/v1.2.md#image-json-field-descriptions
     Cmd = [ "/bin/entrypoint.sh" ];
